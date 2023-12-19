@@ -56,6 +56,9 @@ void main() {
 
     test('arithmetic', () {
       expect(run('3 4 +'), 7);
+      expect(run('3 4 -'), -1);
+      expect(run('3 4 *'), 12);
+      expect(run('3 4 /'), .75);
     });
 
     test('logic', () {

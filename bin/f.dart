@@ -25,11 +25,12 @@ extension on F {
 void main() {
   final f = F();
   // execute raw code
-  f.start([3, 4, '+', '.', '"\n"', '.']);
+  f.start(["'", 3, "'", 4, '+', '.', "'", '\n', '.']);
   f.run('');
 
   // compile and run
-  // f.run('3 5 + . "\\n" .');
-  // f.run(':cr [ "\\n" . ]');
-  // f.run('3 4 swp . . cr');
+  f.run('[ "\\n" . ] !cr');
+  f.run('3 5 + . cr');
+  f.run('3 4 swp . . cr');
+  f.run('[dup 0 = [pop 1] [dup 1 - fac *] ? i] !fac\n13 fac . cr');
 }
