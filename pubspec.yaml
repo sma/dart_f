@@ -1,0 +1,11 @@
+name: f
+description: A tiny stack-based programming language
+version: 1.0.0
+repository: https://github.com/sma/dart_f
+
+environment:
+  sdk: ^3.3.0-186.0.dev
+
+dev_dependencies:
+  lints: ^3.0.0
+  test: ^1.24.0
