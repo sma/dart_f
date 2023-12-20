@@ -8,22 +8,9 @@
 /// Use [push] or [pop] to manipulate the stack.
 ///
 /// Use [compile] to compile a string of code into a list of operations.
-///
-/// Numbers are pushed onto the stack. Everything else is an operation that
-/// may manipulate the stack.
-///
-/// ```
-/// 3 4 + .    ; prints 7
-/// 7 twice .  ; prints 14
-/// 4 !x       ; pops and stores 4 in variable x
-/// @x         ; pushes the value of variable x
-/// [1 2 3]    ; pushes a quotation (which can be invoked with `i`)
-/// [1 +] !inc ; defines a word `inc` that adds 1
-/// "Hello" .  ; prints ‘Hello’
-/// ```
 class F {
   final _r = <_R>[];
-  final _st = <Object>[];
+  final _data = <Object>[];
   final _vars = <String, Object>{
     'twice': ['dup', '+'],
     'nip': ['swp', 'pop'],
@@ -42,17 +29,17 @@ class F {
 
   List<Object> get code => _r.last.code;
 
-  void push(Object value) => _st.add(value);
+  void push(Object value) => _data.add(value);
 
-  Object pop() => _st.removeLast();
+  Object pop() => _data.removeLast();
 
   num popNum() => pop() as num;
 
   List<Object> popN(int n) {
     if (n <= 0) return [];
     if (n == 1) return [pop()];
-    final list = _st.sublist(_st.length - n);
-    _st.removeRange(_st.length - n, _st.length);
+    final list = _data.sublist(_data.length - n);
+    _data.removeRange(_data.length - n, _data.length);
     return list;
   }
 
@@ -70,74 +57,60 @@ class F {
       op = _r.last.next();
       if (op == null) _r.removeLast();
     } while (op == null);
-    if (op is String) {
-      // if (op.startsWith('"')) {
-      //   _st.add(op.substring(1, op.length - 1));
-      // } else if (op.startsWith('@')) {
-      //   _st.add(_vars[op.substring(1)] ?? (throw Exception('undefined variable: $op')));
-      // } else if (op.startsWith('!')) {
-      //   _vars[op.substring(1)] = _st.removeLast();
-      // } else if (op.startsWith(':')) {
-      //   _vars[op.substring(1)] = _code(_r.last.next() ?? (throw Exception('missing code')));
-      // } else {
-      switch (op) {
-        case "'":
-          push(_r.last.next() ?? (throw Exception('missing literal')));
-        case '+':
-          push(popNum() + popNum());
-        case '-':
-          push(-popNum() + popNum());
-        case '*':
-          push(popNum() * popNum());
-        case '/':
-          push((1 / popNum()) * popNum());
-        case '=':
-          push(pop() == pop() ? 1 : 0);
-        case '<':
-          push(popNum() > popNum() ? 1 : 0);
-        case '@': // get var
-          push(_vars[pop() as String] ?? (throw Exception('undefined variable: $op')));
-        case '!': // set var
-          _vars[pop() as String] = pop();
-        case 'i': // invoke quotation
-          start(_code(pop()));
-        case '?': // f a b -> a|b
-          final b = pop();
-          final a = pop();
-          final f = pop();
-          push(f != 0 && f != false ? a : b);
-        case 'dup': // a -> a a
-          push(_st.last);
-        case 'pop': // a ->
-          pop();
-        case 'swp': // a b -> b a
-          final b = pop();
-          final a = pop();
-          push(b);
-          push(a);
-        case 'ovr': // a b -> a b a
-          final b = pop();
-          final a = pop();
-          push(a);
-          push(b);
-          push(a);
-        case 'rot': // a b c -> b c a
-          final a = pop();
-          final b = pop();
-          final c = pop();
-          push(b);
-          push(a);
-          push(c);
-        case '.':
-          return 2;
-        case '??':
-          return 3;
-        default:
-          start(_code(_vars[op] ?? (throw Exception('undefined word: $op'))));
-      }
-      // }
-    } else {
-      push(op);
+    switch (op) {
+      case "'":
+        push(_r.last.next() ?? (throw Exception('missing literal')));
+      case '+':
+        push(popNum() + popNum());
+      case '-':
+        push(-popNum() + popNum());
+      case '*':
+        push(popNum() * popNum());
+      case '/':
+        push((1 / popNum()) * popNum());
+      case '=':
+        push(pop() == pop() ? 1 : 0);
+      case '<':
+        push(popNum() > popNum() ? 1 : 0);
+      case '@': // get var
+        push(_vars[pop() as String] ?? (throw Exception('undefined variable: $op')));
+      case '!': // set var
+        _vars[pop() as String] = pop();
+      case 'i': // invoke quotation
+        start(_code(pop()));
+      case '?': // f a b -> a|b
+        final b = pop();
+        final a = pop();
+        final f = pop();
+        push(f != 0 && f != false ? a : b);
+      case 'dup': // a -> a a
+        push(_data.last);
+      case 'pop': // a ->
+        pop();
+      case 'swp': // a b -> b a
+        final b = pop();
+        final a = pop();
+        push(b);
+        push(a);
+      case 'ovr': // a b -> a b a
+        final b = pop();
+        final a = pop();
+        push(a);
+        push(b);
+        push(a);
+      case 'rot': // a b c -> b c a
+        final c = pop();
+        final b = pop();
+        final a = pop();
+        push(b);
+        push(c);
+        push(a);
+      case '.':
+        return 2;
+      case '??':
+        return 3;
+      default:
+        start(_code(_vars[op] ?? (throw Exception('undefined word: $op'))));
     }
     return 1;
   }
@@ -157,15 +130,10 @@ class F {
   /// * !a -> 'a !    (expand set-variable macro)
   /// * @a -> 'a @    (expand get-variable macro)
   /// * +  -> +       (normal operations)
-  /// * : a ... ;     (define word)
-  ///   -> '[...] 'a !
-  /// * if ... else ... then  (compile conditional)
-  ///   -> [...] [...] ? i
-  /// * (loop -> recursion)
   void compile(String input) {
     void beginQuotation() => push(<Object>[]);
 
-    void compile(Object value) => _code(_st.last).add(value);
+    void compile(Object value) => _code(_data.last).add(value);
 
     void compileLiteral(Object value) {
       compile("'");
@@ -179,8 +147,6 @@ class F {
       return name;
     }
 
-    String? define;
-
     beginQuotation();
     for (final w in _re.allMatches(input).map((m) => m[1]?.unescaped ?? m[0]!)) {
       if (w == '[') {
@@ -188,24 +154,6 @@ class F {
         beginQuotation();
       } else if (w == ']') {
         if (endQuotation() != '[') throw 'missing [';
-        if (define != null) {
-          compileLiteral(define);
-          compile('!');
-          define = null;
-        }
-      } else if (w == 'if') {
-        push('if');
-        beginQuotation();
-      } else if (w == 'else') {
-        if (endQuotation() != 'if') throw 'missing if';
-        push('else');
-        beginQuotation();
-      } else if (w == 'then' || w == 'fi') {
-        final begin = endQuotation();
-        if (begin != 'if' && begin != 'else') throw 'missing if or else';
-        if (begin == 'if') compileLiteral([]);
-        compile('?');
-        compile('i');
       } else if (w.length > 1 && w.startsWith('"') && w.endsWith('"')) {
         compileLiteral(w.substring(1, w.length - 1));
       } else if (w.length > 1 && w.startsWith('!')) {
@@ -214,8 +162,6 @@ class F {
       } else if (w.length > 1 && w.startsWith('@')) {
         compileLiteral(w.substring(1));
         compile('@');
-      } else if (w.length > 1 && w.startsWith(':')) {
-        define = w.substring(1);
       } else {
         final n = num.tryParse(w);
         if (n != null) {

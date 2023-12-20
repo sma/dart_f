@@ -32,7 +32,7 @@ void main() {
       expect(c('!foo @bar'), ["'", 'foo', '!', "'", 'bar', '@']);
     });
     test('define word', () {
-      expect(c(':twice [dup +]'), [
+      expect(c('[dup +] !twice'), [
         "'",
         ['dup', '+'],
         "'",
@@ -64,6 +64,11 @@ void main() {
     test('logic', () {
       expect(run('1 2 <'), 1);
       expect(run('2 1 <'), 0);
+    });
+    test('stack effects', () {
+      expect(run('1 dup pop'), 1);
+      expect(run('1 2 swp -'), 1);
+      expect(run('1 2 3 rot'), 1);
     });
 
     test('conditional', () {
