@@ -165,6 +165,7 @@ class F {
 
     beginQuotation();
     for (final w in _re.allMatches(input).map((m) => m[1]?.unescaped ?? m[0]!)) {
+      if (w.startsWith(';')) continue;
       if (w == '[') {
         push(w);
         beginQuotation();
@@ -190,7 +191,7 @@ class F {
     start(_code(pop()));
   }
 
-  static final _re = RegExp(r'("(?:\\.|[^"])*")|[^\s[\]]+|\S');
+  static final _re = RegExp(r';.*$|("(?:\\.|[^"])*")|[^\s[\]]+|\S', multiLine: true);
 }
 
 extension on String {

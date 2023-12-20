@@ -12,6 +12,9 @@ void main() {
     test('empty', () {
       expect(c(' '), <Object>[]);
     });
+    test('comments', () {
+      expect(c('a ; a comment'), <Object>['a']);
+    });
     test('number literal', () {
       expect(c('42 -0.815'), ["'", 42, "'", -0.815]);
     });
