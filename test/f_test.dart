@@ -80,10 +80,22 @@ void main() {
       expect(run('42 !a 0 @a'), 42);
     });
 
-    test('while', () {
+    test('if/when/unless', () {
+      expect(run('1 [1][2] if'), 1);
+      expect(run('0 [1][2] if'), 2);
+      expect(run('3 1 [1 +] when'), 4);
+      expect(run('3 0 [1 +] when'), 3);
+      expect(run('3 1 [1 +] unless'), 3);
+      expect(run('3 0 [1 +] unless'), 4);
+    });
+
+    test('while/until', () {
       expect(run('-1 [0] [] while'), -1);
       expect(run('0 !a [0] [@a 1 + !a] while @a'), 0);
       expect(run('0 !a [@a 2 <] [@a 1 + !a] while @a'), 2);
+      expect(run('-1 [1] [] until'), -1);
+      expect(run('0 !a [1] [@a 1 + !a] until @a'), 0);
+      expect(run('0 !a [@a 2 =] [@a 1 + !a] until @a'), 2);
     });
   });
 }

@@ -15,6 +15,9 @@ class F {
     'twice': ['dup', '+'],
     'nip': ['swp', 'pop'],
     'tuk': ['swp', 'ovr'],
+    'if': ['?', 'i'],
+    'when': ["'", <Object>[], 'if'],
+    'unless': ["'", <Object>[], 'swp', 'if'],
     'while': [
       'ovr',
       'i',
@@ -25,6 +28,19 @@ class F {
       '?',
       'i',
     ],
+    'until': [
+      'ovr',
+      'i',
+      "'",
+      ['pop', 'pop'],
+      "'",
+      ['dup', 'i', 'until'],
+      '?',
+      'i',
+    ],
+    'loop': ["'", <Object>[], 'while'],
+    'f': ["'", false],
+    't': ["'", true],
   };
 
   List<Object> get code => _r.last.code;

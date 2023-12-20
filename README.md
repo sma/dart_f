@@ -24,13 +24,18 @@ and `!name` for `"name" !`.
 To define new words, use a quotation and assign it to a variable, for example
 `[ 2 * ] !twice`. Words can be recursive.
 
-Use `if .. else .. then` to conditionally execute code. The `else` part is
-optional. This is a _macro_ that rewrites this to `[..] [..] ? i`. The `?`
-operation expects a boolean and two quotations on the stack and picks one of
-them depending on the boolean. `i` will then execute it.
+Use `cond [..] [..] if` to conditionally execute code. Use `when` if there's no
+"else" part. Use `unless` if there's no "then" part. The `if` is a shorthand for
+using `?` to pick one of two values based on a condition combined with `i` to
+invoke a block.
 
-Use `begin .. until` to execute code in a loop. This can be expressed in terms
-of `while`: `[..] [] while`.
+    if ( f qt q2 -- ) == ? i
+    when ( f qt -- ) == [] if
+    unless ( f qt -- ) == [] swp if
+
+Use `cond body while` to execute code in a loop while a condition is true. Use
+`until` to execute body until a condition is true. Use `loop` to execute a
+single quotation that should return true or false.
 
 Here's how to define `while`: It takes two quotations, one for the body and one
 for the condition. It executes the body as long as the condition is true. Then
@@ -40,7 +45,7 @@ both quotations are removed from the stack.
 
 Here's the implementation (which requires the body not to modify the stack):
 
-    :while [
+    while (qc qb -- ) ==
         ovr     ; duplicate condition
         i       ; invoke it
         [       ; if true
@@ -52,4 +57,3 @@ Here's the implementation (which requires the body not to modify the stack):
             pop     ; remove condition
             pop     ; remove body
         ] ? i
-    ]
