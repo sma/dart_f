@@ -9,39 +9,25 @@
 ///
 /// Use [compile] to compile a string of code into a list of operations.
 class F {
+  F() {
+    compile('''
+      [swp pop] !nip
+      [swp ovr] !tuk
+      [0] !f
+      [1] !t
+      [f t ?] !not
+      [? i] !if
+      [[] if] !when
+      [[] swp if] !unless
+      [ovr i [dup i while] [pop pop] ? i] !while
+      [ovr i [pop pop] [dup i until] ? i] !until
+      [[] while] !loop
+      ''');
+    while (step() == 1) {}
+  }
   final _r = <_R>[];
   final _data = <Object>[];
-  final _vars = <String, Object>{
-    'twice': ['dup', '+'],
-    'nip': ['swp', 'pop'],
-    'tuk': ['swp', 'ovr'],
-    'if': ['?', 'i'],
-    'when': ["'", <Object>[], 'if'],
-    'unless': ["'", <Object>[], 'swp', 'if'],
-    'while': [
-      'ovr',
-      'i',
-      "'",
-      ['dup', 'i', 'while'],
-      "'",
-      ['pop', 'pop'],
-      '?',
-      'i',
-    ],
-    'until': [
-      'ovr',
-      'i',
-      "'",
-      ['pop', 'pop'],
-      "'",
-      ['dup', 'i', 'until'],
-      '?',
-      'i',
-    ],
-    'loop': ["'", <Object>[], 'while'],
-    'f': ["'", false],
-    't': ["'", true],
-  };
+  final _vars = <String, Object>{};
 
   List<Object> get code => _r.last.code;
 
@@ -136,9 +122,12 @@ class F {
     throw Exception('not code: $value');
   }
 
-  /// Parses [input] as a sequence of literals and operations, interpreting
-  /// pushing literals, compiling quotations, compiling conditionals, and
-  /// defining words.
+  /// Parses [input] as a sequence of literals and operations. Numbers and
+  /// strings in double quotes are converted to `'` operations (push literal).
+  /// Words starting with `!` are converted to `!` operations (set variable).
+  /// Words starting with `@` are converted to `@` operations (get variable).
+  /// Quotations in square brackets are converted to a sequence of operations
+  /// that push the quotation. The sequence is recursively compiled.
   ///
   /// * 1  -> '1      (push literal numbers)
   /// * "1" -> '1     (push literal strings)
@@ -215,6 +204,7 @@ class _R {
   final List<Object> code;
   var pc = 0;
 
+  /// Returns the next operation or `null` if there are no more operations.
   Object? next() => pc < code.length ? code[pc++] : null;
 
   @override
