@@ -16,10 +16,10 @@ class F {
     'nip': ['swp', 'pop'],
     'tuk': ['swp', 'ovr'],
     'while': [
-      'dup',
+      'ovr',
       'i',
       "'",
-      ['ovr', 'i', 'while'],
+      ['dup', 'i', 'while'],
       "'",
       ['pop', 'pop'],
       '?',

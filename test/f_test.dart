@@ -81,9 +81,9 @@ void main() {
     });
 
     test('while', () {
-      expect(run('-1 [] [0] while'), -1);
-      expect(run('0 !a [@a 1 + !a] [0] while @a'), 0);
-      expect(run('0 !a [@a 1 + !a] [@a 2 <] while @a'), 2);
+      expect(run('-1 [0] [] while'), -1);
+      expect(run('0 !a [0] [@a 1 + !a] while @a'), 0);
+      expect(run('0 !a [@a 2 <] [@a 1 + !a] while @a'), 2);
     });
   });
 }

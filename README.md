@@ -30,21 +30,21 @@ operation expects a boolean and two quotations on the stack and picks one of
 them depending on the boolean. `i` will then execute it.
 
 Use `begin .. until` to execute code in a loop. This can be expressed in terms
-of `while`: `[] [..] while`.
+of `while`: `[..] [] while`.
 
 Here's how to define `while`: It takes two quotations, one for the body and one
 for the condition. It executes the body as long as the condition is true. Then
 both quotations are removed from the stack.
 
-    [ @x . @x 1 + !@ ] [ @x < 10 ] while
+    [ @x < 10 ] [ @x . @x 1 + !@ ] while
 
 Here's the implementation (which requires the body not to modify the stack):
 
     :while [
-        dup     ; duplicate condition
+        ovr     ; duplicate condition
         i       ; invoke it
         [       ; if true
-            ovr     ; duplicate body
+            dup     ; duplicate body
             i       ; invoke it (this should not modify the stack)
             while   ; recurse
         ]
