@@ -194,12 +194,18 @@ class F {
 }
 
 extension on String {
-  String get unescaped => replaceAllMapped(RegExp(r'\\(?:u\{([\da-f]{1,6})\}|u([\da-f]{4})|(.))'), (m) {
-        final u = m[1] ?? m[2];
-        if (u != null) return String.fromCharCode(int.parse(u, radix: 16));
-        if (m[3] == 'n') return '\n';
-        return m[3]!;
-      });
+  String get unescaped => replaceAllMapped(
+        RegExp(r'\\(?:u\{([\da-f]{1,6})\}|u([\da-f]{4})|(.))'),
+        (m) {
+          final u = m[1] ?? m[2];
+          if (u != null) return String.fromCharCode(int.parse(u, radix: 16));
+          final e = m[3]!;
+          if (e == 'n') return '\n';
+          if (e == 'r') return '\r';
+          if (e == 't') return '\t';
+          return e;
+        },
+      );
 }
 
 /// A stack frame that can return the [next] operation.
