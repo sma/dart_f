@@ -166,7 +166,7 @@ class F {
     });
   }
 
-  static final _re1 = RegExp(r';.*$|("(?:\\.|[^"])*)"|[^\s;"[\]]+|\S+', multiLine: true);
+  static final _re1 = RegExp(r';.*$|("(?:\\.|[^"])*)"|[^\s;"[\]]+|\S', multiLine: true);
   static final _re2 = RegExp(r'\\(?:u\{([\da-fA-F]{1,6})\}|u([\da-fA-F]{4})|(.))');
 
   /// Casts [value] into a quotation.
