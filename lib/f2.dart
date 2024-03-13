@@ -34,9 +34,26 @@ class F {
     'i': impl((f) => f.start(_code(f.pop()))),
     'dup': impl((f) => f.push(f.tos)),
     'pop': impl((f) => f.pop()),
+    'swp': impl((f) {
+      final b = f.pop();
+      final a = f.pop();
+      f.push(b);
+      f.push(a);
+    }),
+    'ovr': impl((f) {
+      final b = f.pop();
+      final a = f.pop();
+      f.push(a);
+      f.push(b);
+      f.push(a);
+    }),
+    'pick': impl((f) {
+      final n = f.popNum().toInt();
+      f.push(f._data[n < 0 ? n + f._data.length : n]);
+    }),
     '+': impl((f) => f.push(f.popNum() + f.popNum())),
     '-': impl((f) => f.push(-f.popNum() + f.popNum())),
-    '*': impl((f) => f.push(-f.popNum() * f.popNum())),
+    '*': impl((f) => f.push(f.popNum() * f.popNum())),
     '/': impl((f) => f.push(1 / f.popNum() * f.popNum())),
     '=': impl((f) => f.push(f.pop() == f.pop())),
     '<': impl((f) => f.push(f.popNum() > f.popNum())),
@@ -211,4 +228,54 @@ Future<void> main() async {
   f['.'] = F.impl((f) => print('#> ${f.pop()}'));
   f.start(['"Hallo, Welt', '.']);
   await f.runAsync((f, w) async {});
+
+  // does not work
+  f['map'] = F.impl((f) {
+    // (list quot -- list)
+    final quot = f.pop() as List<Object>;
+    final list = f.pop() as List<Object>;
+    final result = <Object>[];
+    for (final elem in list) {
+      f.push(elem);
+      f.start(quot);
+      f.run();
+      result.add(f.pop());
+    }
+    f.push(result);
+  });
+  f['size'] = F.impl((f) => f.push((f.pop() as Iterable).length));
+  f['at'] = F.impl((f) {
+    var index = f.popNum().toInt();
+    final list = f.pop() as List<Object>;
+    if (index < 0) index += list.length;
+    f.push(list[index]);
+  });
+  f['add'] = F.impl((f) {
+    final elem = f.pop();
+    final list = f.pop() as List<Object>;
+    list.add(elem);
+  });
+  f.compile(';(cond body --)\n[ovr i [dup i while] [pop pop] ? i] !while');
+  f.run();
+
+  f['.S'] = F.impl((f) => print('----> ${f._data}'));
+
+  // f.compile('[!quot !list [] !r 0 !k [@k @list size <] [@list @k at @quot i @r swp add @k 1 + !k] while @r] !map');
+  f.compile('''[             ; list quot
+    []                      ; list quot result
+    0                       ; list quot result index
+    [dup -5 pick size <]
+    [dup -5 pick swp at     ; list quot result index elem
+    -4 pick i               ; list quot result index mapped-elem
+    -3 pick swp add         ; list quot result index
+    1 + .S] i
+    while                   ; list quot result
+    .S
+    swp pop                 ; list result
+    swp pop                 ; result  
+    ] !map
+''');
+  f.run();
+  f.compile('[2 3 4] [dup *] map .');
+  f.run();
 }
