@@ -25,6 +25,7 @@ class F {
       ''');
     while (step() == 1) {}
   }
+
   final _r = <_R>[];
   final _data = <Object>[];
   final _vars = <String, Object>{};
@@ -50,8 +51,8 @@ class F {
   /// Executes one instruction. Then signals how to proceed.
   /// + 0 means that nothing is left to do.
   /// + 1 means that the caller should call again.
-  /// + 2 means that the caller should print the top of the stack.
-  /// + 3 means that the caller should read a line of input.
+  /// + 2 means that the caller should [pop] and print the top of the stack.
+  /// + 3 means that the caller should read a line of input and [push] it
   int step() {
     Object? op;
     do {
@@ -117,6 +118,7 @@ class F {
     return 1;
   }
 
+  /// Casts [value] to a `List<Object>` and throws an exception if impossible.
   static List<Object> _code(Object value) {
     if (value is List<Object>) return value;
     throw Exception('not code: $value');
@@ -129,12 +131,13 @@ class F {
   /// Quotations in square brackets are converted to a sequence of operations
   /// that push the quotation. The sequence is recursively compiled.
   ///
-  /// * 1  -> '1      (push literal numbers)
-  /// * "1" -> '1     (push literal strings)
-  /// * [1] -> '['1]  (push literal quotations, recursive)
-  /// * !a -> 'a !    (expand set-variable macro)
-  /// * @a -> 'a @    (expand get-variable macro)
-  /// * +  -> +       (normal operations)
+  /// * `;...`               (ignored as comment)
+  /// * `1`   -> `' 1`       (push literal numbers)
+  /// * `"1"` -> `' 1`       (push literal strings)
+  /// * `[1]` -> `' [ ' 1 ]` (push literal quotations, recursive)
+  /// * `!a`  -> `' a !`     (expand set-variable macro)
+  /// * `@a`  -> `' a @`     (expand get-variable macro)
+  /// * `+`   -> `+`         (normal operations, unchanged)
   void compile(String input) {
     void beginQuotation() => push(<Object>[]);
 
@@ -169,8 +172,7 @@ class F {
         compileLiteral(w.substring(1));
         compile('@');
       } else {
-        final n = num.tryParse(w);
-        if (n != null) {
+        if (num.tryParse(w) case final n?) {
           compileLiteral(n);
         } else {
           compile(w);
@@ -184,16 +186,17 @@ class F {
 }
 
 extension on String {
+  /// Replaces `\uHHHH`, `\u{H..HHHHHH}`, `\n`, `\r`, `\t`, and `\C`.
   String get unescaped => replaceAllMapped(
         RegExp(r'\\(?:u\{([\da-f]{1,6})\}|u([\da-f]{4})|(.))'),
         (m) {
-          final u = m[1] ?? m[2];
-          if (u != null) return String.fromCharCode(int.parse(u, radix: 16));
-          final e = m[3]!;
-          if (e == 'n') return '\n';
-          if (e == 'r') return '\r';
-          if (e == 't') return '\t';
-          return e;
+          if (m[1] ?? m[2] case final u?) return String.fromCharCode(int.parse(u, radix: 16));
+          return switch (m[3]!) {
+            'n' => '\n',
+            'r' => '\r',
+            't' => '\t',
+            final c => c,
+          };
         },
       );
 }

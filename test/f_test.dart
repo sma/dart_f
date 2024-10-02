@@ -2,13 +2,29 @@ import 'package:f/f.dart';
 import 'package:test/test.dart';
 
 void main() {
-  test('push/pop', () {
-    final f = F();
-    f.push(42);
-    expect(f.pop(), 42);
+  group('basic', () {
+    test('push/pop,popNum', () {
+      final f = F()
+        ..push(41)
+        ..push(42);
+      expect(f.pop(), 42);
+      expect(f.popNum(), 41);
+    });
+
+    test('push/popN', () {
+      final f = F()
+        ..push(3)
+        ..push(4)
+        ..push(5);
+      expect(f.popN(2), <Object>[4, 5]);
+      expect(f.popN(0), <Object>[]);
+      expect(f.popN(1), <Object>[3]);
+    });
   });
+
   group('compile', () {
     List<Object> c(String input) => (F()..compile(input)).code;
+
     test('empty', () {
       expect(c(' '), <Object>[]);
     });
@@ -65,6 +81,8 @@ void main() {
     });
 
     test('logic', () {
+      expect(run('1 1 ='), 1);
+      expect(run('2 1 ='), 0);
       expect(run('1 2 <'), 1);
       expect(run('2 1 <'), 0);
     });
