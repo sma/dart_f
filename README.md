@@ -21,15 +21,15 @@ Use `[bool] [body] while` to execute code in a loop while a condition is true. U
 
 Here's how to use `while`:
 
-    [ @x < 10 ] [ @x . @x 1 + !@ ] while
+    [ @x < 10 ] [ @x . @x 1 + !x ] while
 
 Here's the implementation (which requires the body `qc` not to modify the stack):
 
-    while (qc qb -- ) ==
-        ovr     ; duplicate condition
+    while ( qc qb -- ) ==
+        ovr     ; duplicate condition qc
         i       ; invoke it
         [       ; if true
-            dup     ; duplicate body
+            dup     ; duplicate body qb
             i       ; invoke it (this should not modify the stack)
             while   ; recurse
         ]

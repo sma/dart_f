@@ -38,6 +38,8 @@ class F {
 
   num popNum() => pop() as num;
 
+  String popStr() => pop() as String;
+
   List<Object> popN(int n) {
     if (n <= 0) return [];
     if (n == 1) return [pop()];
@@ -52,7 +54,7 @@ class F {
   /// + 0 means that nothing is left to do.
   /// + 1 means that the caller should call again.
   /// + 2 means that the caller should [pop] and print the top of the stack.
-  /// + 3 means that the caller should read a line of input and [push] it
+  /// + 3 means that the caller should read a line of input and [push] it.
   int step() {
     Object? op;
     do {
@@ -76,9 +78,9 @@ class F {
       case '<':
         push(popNum() > popNum() ? 1 : 0);
       case '@': // get var
-        push(_vars[pop() as String] ?? (throw Exception('undefined variable: $op')));
+        push(_vars[popStr()] ?? (throw Exception('undefined variable: $op')));
       case '!': // set var
-        _vars[pop() as String] = pop();
+        _vars[popStr()] = pop();
       case 'i': // invoke quotation
         start(_code(pop()));
       case '?': // f a b -> a|b
@@ -133,10 +135,10 @@ class F {
   ///
   /// * `;...`               (ignored as comment)
   /// * `1`   -> `' 1`       (push literal numbers)
-  /// * `"1"` -> `' 1`       (push literal strings)
+  /// * `"1"` -> `' "1"`     (push literal strings)
   /// * `[1]` -> `' [ ' 1 ]` (push literal quotations, recursive)
-  /// * `!a`  -> `' a !`     (expand set-variable macro)
-  /// * `@a`  -> `' a @`     (expand get-variable macro)
+  /// * `!a`  -> `' "a" !`   (expand set-variable macro)
+  /// * `@a`  -> `' "a" @`   (expand get-variable macro)
   /// * `+`   -> `+`         (normal operations, unchanged)
   void compile(String input) {
     void beginQuotation() => push(<Object>[]);
@@ -156,7 +158,8 @@ class F {
     }
 
     beginQuotation();
-    for (final w in _re.allMatches(input).map((m) => m[1]?.unescaped ?? m[0]!)) {
+    for (final w
+        in _re.allMatches(input).map((m) => m[1]?.unescaped ?? m[0]!)) {
       if (w.startsWith(';')) continue;
       if (w == '[') {
         push(w);
@@ -182,23 +185,28 @@ class F {
     start(_code(pop()));
   }
 
-  static final _re = RegExp(r';.*$|("(?:\\.|[^"])*")|[^\s[\]]+|\S', multiLine: true);
+  static final _re = RegExp(
+    r';.*$|("(?:\\.|[^"])*")|[^\s[\]]+|\S',
+    multiLine: true,
+  );
 }
 
 extension on String {
   /// Replaces `\uHHHH`, `\u{H..HHHHHH}`, `\n`, `\r`, `\t`, and `\C`.
   String get unescaped => replaceAllMapped(
-        RegExp(r'\\(?:u\{([\da-f]{1,6})\}|u([\da-f]{4})|(.))'),
-        (m) {
-          if (m[1] ?? m[2] case final u?) return String.fromCharCode(int.parse(u, radix: 16));
-          return switch (m[3]!) {
-            'n' => '\n',
-            'r' => '\r',
-            't' => '\t',
-            final c => c,
-          };
-        },
-      );
+    RegExp(r'\\(?:u\{([0-9a-f]{1,6})\}|u([0-9a-f]{4})|(.))'),
+    (m) {
+      if (m[1] ?? m[2] case final u?) {
+        return String.fromCharCode(int.parse(u, radix: 16));
+      }
+      return switch (m[3]!) {
+        'n' => '\n',
+        'r' => '\r',
+        't' => '\t',
+        final c => c,
+      };
+    },
+  );
 }
 
 /// A stack frame that can return the [next] operation.
